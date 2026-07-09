@@ -114,16 +114,16 @@ Example format:
 This issue has sufficient detail for automated implementation.
 
 **Scope:** Add validation for email field in user registration
-**Files:** `concept/apps/api/src/routes/users.js`
+**Files:** `src/routes/users.js`
 **Requirements:** 
 - Email format validation using standard regex
 - Return 400 with clear error message if invalid
-- Add unit tests in `concept/tests/unit/api/services/`
+- Add unit tests following repository conventions
 
-**Approach:** Use existing validation middleware pattern from `/api/tasks` routes.
+**Approach:** Use existing validation middleware pattern from other routes.
 
 ---
-@TeplrGuy This issue is ready for automated processing. The AI Implementation Agent will automatically begin work once this label is applied.
+@{assignee} This issue is ready for automated processing. The AI Implementation Agent will automatically begin work once this label is applied.
 ```
 
 If you add `needs-human-review`, post a comment explaining why:
@@ -133,24 +133,27 @@ If you add `needs-human-review`, post a comment explaining why:
 This issue needs human judgment before implementation:
 - [Reason: architectural decision needed / security implications / unclear scope / etc.]
 
-@TeplrGuy Please review and provide additional guidance or break this down into more specific tasks.
+@{assignee} Please review and provide additional guidance or break this down into more specific tasks.
 ```
 
 ### 7) Assign ownership
 
+**For all issues (regardless of readiness):**
+- Assign to TeplrGuy for visibility and oversight
+- Assignment doesn't block automated work for `ai-ready` issues
+
 **For `ai-ready` issues:**
-- Assign to `TeplrGuy` for oversight
 - The `ai-ready` label automatically triggers the **AI Implementation Agent** workflow
-- AI agent will read the guidance comment, implement changes, run tests, and create a PR
-- TeplrGuy reviews and merges the AI-generated PR
+- AI agent reads the guidance comment, implements changes, runs tests, and creates a PR
+- Human reviews and merges the AI-generated PR
 
 **For `needs-human-review` issues:**
-- Assign to `TeplrGuy` for direct action
-- Human decides how to proceed (refine requirements, break down, implement manually)
+- Human makes decisions on architecture, approach, or scope
+- May refine requirements and re-label as `ai-ready` for automation
 
 **For `status:needs-info` issues:**
-- Assign to `TeplrGuy` to monitor for user response
-- Re-triage once information is provided
+- Human monitors for user response
+- Re-triage when information is provided
 
 Always add `status:triaged` after successful triage.
 
@@ -166,13 +169,15 @@ Always add `status:triaged` after successful triage.
 
 **Good candidates for `ai-ready`:**
 - "Add DELETE endpoint for /api/tasks/:id with authorization check"
-- "Fix bug: pagination breaks on Projects page when page > 10"
-- "Add email validation to user registration form"
+- "Fix bug: pagination breaks on page 10+ due to offset calculation"
+- "Add email validation to user registration form with proper error messages"
+- "Refactor authentication middleware to use async/await"
 
 **Needs human review:**
-- "Improve application performance" (too vague)
-- "Redesign the dashboard" (architectural decision needed)
-- "Add AI features to the app" (scope unclear)
+- "Improve application performance" (too vague, needs specific metrics/areas)
+- "Redesign the dashboard" (architectural decision needed, UX input required)
+- "Add AI features to the app" (scope unclear, multiple approaches possible)
+- "Migrate to new database" (requires careful planning and data migration strategy)
 
 ## Workflow Integration
 
@@ -181,7 +186,7 @@ This triage agent is part of an automated issue-to-PR pipeline:
 ### 1. **Triage** (this workflow)
 - New issue opened → Auto-labeled with type + priority
 - Assessed for AI readiness
-- If `ai-ready`: Posts structured guidance comment + assigns to TeplrGuy
+- If `ai-ready`: Posts structured guidance comment + assigns owner
 - If `needs-human-review`: Requests human intervention
 
 ### 2. **Automated Implementation** (AI Implementation Agent workflow)
@@ -192,7 +197,7 @@ This triage agent is part of an automated issue-to-PR pipeline:
 - Creates PR automatically with detailed description
 
 ### 3. **Human Review**
-- TeplrGuy reviews the AI-generated PR
+- Assigned person reviews the AI-generated PR
 - Merges if acceptable or requests changes
 - Closes the original issue automatically via PR
 
@@ -200,3 +205,5 @@ This triage agent is part of an automated issue-to-PR pipeline:
 - Ready for AI: `is:issue is:open label:ai-ready`
 - Needs human: `is:issue is:open label:needs-human-review`
 - Needs info: `is:issue is:open label:status:needs-info`
+
+**Result:** Well-specified issues go from triage → implementation → PR in minutes, freeing humans to focus on complex problems that need judgment.
