@@ -24,7 +24,7 @@ On each run, keep repository documentation aligned with recent code changes.
 
 ### 1) Review recent code activity
 
-- Inspect merged pull requests and commits on the default branch from the last 24 hours.
+- Inspect merged pull requests and commits on the default branch since the previous successful run (fallback: last 24 hours when prior run context is unavailable).
 - Focus on changes to source code, APIs, scripts, workflows, tests, configuration, and infrastructure files.
 
 ### 2) Identify documentation drift
@@ -49,7 +49,7 @@ If documentation updates are needed, create exactly one PR with:
 
 ### 5) No-op behavior
 
-- If no documentation drift is detected, call `noop` with a short explanation of what was checked.
+- If no documentation drift is detected, call `noop` with a short explanation that includes the time window checked, how many commits/PRs were reviewed, and which doc files or doc areas were evaluated.
 
 ## Safe Outputs
 
