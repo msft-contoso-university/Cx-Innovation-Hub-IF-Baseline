@@ -19,6 +19,8 @@ safe-outputs:
   create-pull-request:
     branch-prefix: "ai-impl-"
     auto-merge: false
+    allowed-files:
+      - "**/*"
     max: 1
   add-comment:
     max: 3
@@ -217,6 +219,7 @@ If implementation fails at any step:
 - PRs created from `ai-impl-{issue-number}` branches
 - Base branch: Determined from repository default or AI guidance
 - Auto-merge disabled (requires human review)
+- Allowed to modify any files (`**/*`) - since issues can request changes to any part of the codebase
 
 **Labels:**
 - Can add: `automated`, `needs-human-review`
