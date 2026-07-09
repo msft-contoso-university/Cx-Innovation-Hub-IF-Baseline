@@ -1,7 +1,7 @@
 ---
 emoji: 📚
 description: "Runs daily to detect documentation drift from recent code changes and opens a PR with doc updates."
-on: daily
+on: daily # Compiles to a scattered daily cron in the lock workflow
 permissions:
   contents: read
   pull-requests: read
