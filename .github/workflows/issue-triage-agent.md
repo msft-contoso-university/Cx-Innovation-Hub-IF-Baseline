@@ -4,14 +4,14 @@ description: "Triages newly opened issues by labeling type/priority, detecting d
 on:
   issues:
     types: [opened]
+  roles: all
 permissions:
   contents: read
   issues: read
-roles: all
 tools:
   github:
     mode: gh-proxy
-    toolsets: [default, issues]
+    toolsets: [issues]
 safe-outputs:
   add-labels:
     allowed:
