@@ -171,7 +171,7 @@ router.delete("/comments/:id", async (req, res, next) => {
 
     await getPool().query("DELETE FROM comments WHERE id = $1", [req.params.id]);
 
-    res.json({ message: "Comment deleted", id: req.params.id });
+    res.status(204).send();
   } catch (err) {
     next(err);
   }
