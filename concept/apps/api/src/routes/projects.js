@@ -1,9 +1,10 @@
 // =============================================================================
 // Projects Routes
 // =============================================================================
-// GET  /api/projects       - List all projects
-// GET  /api/projects/:id   - Get a single project (with task counts by status)
-// POST /api/projects       - Create a new project
+// GET    /api/projects       - List all projects
+// GET    /api/projects/:id   - Get a single project (with task counts by status)
+// POST   /api/projects       - Create a new project
+// DELETE /api/projects/:id   - Delete a project (cascades to tasks and comments)
 // =============================================================================
 
 const { Router } = require("express");
@@ -69,6 +70,28 @@ router.post("/", async (req, res, next) => {
       [name.trim(), description || null]
     );
     res.status(201).json(rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * DELETE /api/projects/:id
+ * Deletes a project. Associated tasks and comments are removed automatically
+ * via the ON DELETE CASCADE foreign key constraints in the database schema.
+ */
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const { rows } = await getPool().query(
+      "DELETE FROM projects WHERE id = $1 RETURNING id",
+      [req.params.id]
+    );
+
+    if (rows.length === 0) {
+      return next(createError(404, "Project not found"));
+    }
+
+    res.json({ message: "Project deleted", id: rows[0].id });
   } catch (err) {
     next(err);
   }
