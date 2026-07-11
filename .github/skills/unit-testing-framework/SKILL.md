@@ -132,3 +132,24 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## Testing Express Route Modules (Learned Pattern)
+
+- Route files in `concept/apps/api/src/routes/` depend on `express` and the local `../services/database` module.
+- `express` is **not** installed in the test package by default — add it as a dev dependency: `npm install express --save-dev`.
+- Pre-load `express` via `require('express')` **before** patching `Module._load` to avoid infinite recursion:
+  ```typescript
+  const expressModule = require('express'); // load once before patching
+  Module._load = (request, parent, isMain) => {
+    if (request === 'express') return expressModule;          // avoids re-entry
+    if (request === '../services/database') return { getPool: () => mockPool };
+    return originalLoad(request, parent, isMain);
+  };
+  ```
+- Access route handlers via `router.stack` after loading the module:
+  ```typescript
+  const layer = router.stack.find(l => l.route?.path === '/path' && l.route.methods.post);
+  const handler = layer.route.stack[layer.route.stack.length - 1].handle;
+  await handler(mockReq, mockRes, mockNext);
+  ```
+- Mock `res` as `{ status: vi.fn(() => ({ json: vi.fn() })), json: vi.fn() }` so chained calls work.
