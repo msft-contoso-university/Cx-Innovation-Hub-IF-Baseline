@@ -13,7 +13,6 @@ safe-outputs:
   create-pull-request:
     max: 1
     allowed-files:
-      - "*.md"
       - "**/*.md"
 ---
 
