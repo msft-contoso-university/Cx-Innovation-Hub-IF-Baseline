@@ -9,6 +9,7 @@ Scenarios loaded:
   - KanbanBoardUser     (weight 4) — load board and drag-drop status changes
   - CommentActivityUser (weight 2) — read and post task comments
   - HealthCheckUser     (weight 1) — lightweight health probe
+  - TaskLifecycleUser   (weight 2) — create/update/assign/delete task and comments
   - UserDirectoryUser   (weight 3) — browse user directory and view profiles
 """
 
@@ -19,6 +20,7 @@ from scenarios import (  # noqa: F401  — Locust discovers these at import time
     KanbanBoardUser,
     CommentActivityUser,
     HealthCheckUser,
+    TaskLifecycleUser,
     UserDirectoryUser,
 )
 
