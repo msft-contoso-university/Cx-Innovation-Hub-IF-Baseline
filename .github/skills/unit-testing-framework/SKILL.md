@@ -132,3 +132,63 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## Relative Path Depth for API Source Files (Verified)
+
+All test files under `concept/tests/unit/` share the same depth table for imports from the API source tree.
+Count `..` levels from the **test file's directory** up to `concept/`, then descend into `apps/api/src/`:
+
+| Test file location              | Levels up to `concept/` | Example import prefix                  |
+|---------------------------------|-------------------------|----------------------------------------|
+| `concept/tests/unit/`           | `../../..`  (3)         | `../../../apps/api/src/...`            |
+| `concept/tests/unit/api/`       | `../../../..`  (4)      | `../../../../apps/api/src/...`         |
+| `concept/tests/unit/api/<sub>/` | `../../../../..`  (4)   | `../../../../apps/api/src/...`         |
+
+Note: `api/services/`, `api/routes/`, and `api/middleware/` are all at the same depth (4 levels from `concept/`), so all use `../../../../apps/api/src/...`.
+
+**Example** — spec at `concept/tests/unit/api/routes/foo.spec.ts` importing the database service:
+```typescript
+const require = createRequire(import.meta.url);
+const dbPath = require.resolve('../../../../apps/api/src/services/database.js');
+```
+
+## Route Handler Testing Without Supertest (Learned Pattern)
+
+Express Router route handlers can be unit-tested without a running HTTP server or supertest by extracting them from the router's internal `.stack`:
+
+```typescript
+function getRouteHandler(router: any, method: string, routePath: string) {
+  for (const layer of router.stack) {
+    if (layer.route?.path === routePath && layer.route?.methods[method.toLowerCase()]) {
+      const handlers = layer.route.stack;
+      return handlers[handlers.length - 1].handle;
+    }
+  }
+  throw new Error(`Route handler not found: ${method.toUpperCase()} ${routePath}`);
+}
+```
+
+Call the returned `handle` with mock `req`, `res`, and `next` objects. The mock `res` must support method chaining (`.status().json()`):
+
+```typescript
+function createMockRes() {
+  const res: any = {};
+  res.status = vi.fn().mockReturnValue(res);
+  res.json = vi.fn().mockReturnValue(res);
+  return res;
+}
+```
+
+Use `Module._resolveFilename(request, parent, isMain)` (not `require.resolve`) inside the `Module._load` interceptor to resolve the absolute path of the intercepted module relative to the *requiring* file — this ensures relative database requires from route files are intercepted correctly:
+
+```typescript
+Module._load = (request: string, parent: unknown, isMain: boolean) => {
+  if (parent && typeof (parent as any).filename === 'string') {
+    let resolved: string;
+    try { resolved = Module._resolveFilename(request, parent, isMain); }
+    catch { return originalLoad(request, parent, isMain); }
+    if (resolved === databaseModulePath) return { getPool: () => mockPool };
+  }
+  return originalLoad(request, parent, isMain);
+};
+```
