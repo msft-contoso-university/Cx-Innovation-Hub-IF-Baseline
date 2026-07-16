@@ -132,3 +132,21 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## Express Route Testing (Learned Pattern)
+
+- The API route files (`concept/apps/api/src/routes/*.js`) require `express` directly, but express is **not** installed in `concept/apps/api/node_modules/` (it's only a declared dependency, installed at runtime in Docker).
+- When testing route files, add `express` as a devDependency in `concept/tests/unit/package.json` and intercept it in `Module._load` by resolving it from the test package:
+  ```typescript
+  const expressPath = require.resolve('express'); // resolves from concept/tests/unit/node_modules
+  Module._load = (request, parent, isMain) => {
+    if (request === 'express') return originalLoad(expressPath, parent, isMain);
+    // ... other intercepts
+    return originalLoad(request, parent, isMain);
+  };
+  ```
+- Access individual route handlers via `router.stack` to call them directly without spinning up a full Express app:
+  ```typescript
+  const layer = router.stack.find(l => l.route?.path === '/tasks/:id' && l.route.methods.delete);
+  await layer.route.stack[0].handle(req, res, next);
+  ```
