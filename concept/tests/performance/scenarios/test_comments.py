@@ -89,3 +89,85 @@ class CommentActivityUser(TaskifyBaseUser):
                 resp.failure(
                     f"comment_activity post: response time {resp.elapsed.total_seconds()*1000:.0f}ms > 1000ms"
                 )
+
+    @task
+    def comment_management(self):
+        """Post a comment as the current user, edit it, then delete it.
+
+        Covers PUT /api/comments/:id and DELETE /api/comments/:id.
+        Because the comment is created and deleted in the same task, the
+        database stays clean over the lifetime of the test run.
+        """
+        if not self.projects:
+            return
+
+        project = random.choice(self.projects)
+        project_id = project.get("id", project.get("_id"))
+
+        # Fetch tasks to pick one to comment on
+        with self.client.get(
+            f"/api/projects/{project_id}/tasks",
+            name="[comment_mgmt] GET /api/projects/:id/tasks",
+            catch_response=True,
+        ) as resp:
+            if resp.status_code != 200:
+                resp.failure(f"comment_management tasks: status {resp.status_code}")
+                return
+            tasks = resp.json()
+
+        if not tasks:
+            return
+
+        task_id = random.choice(tasks).get("id")
+
+        # Create a comment owned by the current user
+        with self.client.post(
+            f"/api/tasks/{task_id}/comments",
+            json={"content": random.choice(COMMENT_TEXTS)},
+            headers={"X-User-Id": self.current_user_id},
+            name="POST /api/tasks/:taskId/comments",
+            catch_response=True,
+        ) as resp:
+            if resp.status_code != 201:
+                resp.failure(f"comment_management create: status {resp.status_code}")
+                return
+            if resp.elapsed.total_seconds() * 1000 > 1000:
+                resp.failure(
+                    f"comment_management create: response time "
+                    f"{resp.elapsed.total_seconds() * 1000:.0f}ms > 1000ms"
+                )
+                return
+            comment = resp.json()
+
+        comment_id = comment.get("id", comment.get("_id"))
+
+        # Edit the comment (author-only operation)
+        with self.client.put(
+            f"/api/comments/{comment_id}",
+            json={"content": f"{random.choice(COMMENT_TEXTS)} (edited)"},
+            headers={"X-User-Id": self.current_user_id},
+            name="PUT /api/comments/:id",
+            catch_response=True,
+        ) as resp:
+            if resp.status_code < 200 or resp.status_code >= 300:
+                resp.failure(f"comment_management edit: status {resp.status_code}")
+            elif resp.elapsed.total_seconds() * 1000 > 1000:
+                resp.failure(
+                    f"comment_management edit: response time "
+                    f"{resp.elapsed.total_seconds() * 1000:.0f}ms > 1000ms"
+                )
+
+        # Delete the comment (author-only operation, also cleans up test data)
+        with self.client.delete(
+            f"/api/comments/{comment_id}",
+            headers={"X-User-Id": self.current_user_id},
+            name="DELETE /api/comments/:id",
+            catch_response=True,
+        ) as resp:
+            if resp.status_code < 200 or resp.status_code >= 300:
+                resp.failure(f"comment_management delete: status {resp.status_code}")
+            elif resp.elapsed.total_seconds() * 1000 > 1000:
+                resp.failure(
+                    f"comment_management delete: response time "
+                    f"{resp.elapsed.total_seconds() * 1000:.0f}ms > 1000ms"
+                )
