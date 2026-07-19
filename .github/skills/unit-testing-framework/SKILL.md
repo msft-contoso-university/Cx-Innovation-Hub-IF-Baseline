@@ -132,3 +132,43 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## Express Router Mock Pattern (for route handler tests)
+
+Route files in `concept/apps/api/src/routes/` are CJS and require `express` for its `Router`. Since `express` is not installed in the test project, mock it in `Module._load` using a minimal handler registry:
+
+```typescript
+let handlers: Record<string, Function> = {};
+
+function createMockRouter() {
+  const router: any = {};
+  handlers = {};
+  for (const method of ['get', 'post', 'put', 'patch', 'delete'] as const) {
+    router[method] = (path: string, handler: Function) => {
+      handlers[`${method.toUpperCase()} ${path}`] = handler;
+      return router;
+    };
+  }
+  return router;
+}
+
+// In loadRouter():
+Module._load = (request: string, parent: unknown, isMain: boolean) => {
+  if (request === 'express') return { Router: createMockRouter };
+  if (request === '../services/database') return { getPool: () => mockPool };
+  return originalLoad(request, parent, isMain);
+};
+```
+
+Then call handlers directly in tests:
+
+```typescript
+await handlers['POST /']!(req, res, next);
+expect(next.mock.calls[0][0]).toMatchObject({ status: 400, message: '...' });
+```
+
+- Set `req.params`, `req.body`, `req.headers` manually on a plain object.
+- Mock `res` with `{ json: vi.fn(), status: vi.fn().mockReturnThis() }`.
+- Use `next = vi.fn()` and assert on `next.mock.calls[0][0]` for error cases.
+- `delete require.cache[routerPath]` before each `require(routerPath)` call to get fresh handlers.
+- The path from `concept/tests/unit/api/routes/` to `concept/apps/api/src/routes/` is `../../../../apps/api/src/routes/`.
