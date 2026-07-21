@@ -132,3 +132,29 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## Testing Express Route Handlers (Learned Pattern)
+
+- Express route files (`apps/api/src/routes/*.js`) require `express` at load time.
+- `express` is NOT available in the test package's `node_modules` by default.
+- **Fix**: install `express` as a dependency in `concept/tests/unit` (`npm install express`), then pre-load it in the Module._load interceptor:
+  ```typescript
+  const expressModule = require('express'); // loaded from test's node_modules
+  Module._load = (request, parent, isMain) => {
+    if (request === 'express') return expressModule;
+    // ... other mocks
+    return originalLoad(request, parent, isMain);
+  };
+  ```
+- Extract individual route handlers from the Express Router's stack for direct invocation:
+  ```typescript
+  function findHandler(router, method, routePath) {
+    const layer = router.stack.find(
+      (l) => l.route && l.route.methods[method.toLowerCase()] === true && l.route.path === routePath
+    );
+    const routeStack = layer.route.stack;
+    return routeStack[routeStack.length - 1].handle; // last handler = actual logic
+  }
+  ```
+- Mock `req`, `res`, and `next` as plain objects / `vi.fn()` calls; `res` only needs the methods the handler under test calls (e.g., `{ status: vi.fn().mockReturnThis(), json: vi.fn() }`).
+- This approach lets you test validation and auth guards without running a real HTTP server.
