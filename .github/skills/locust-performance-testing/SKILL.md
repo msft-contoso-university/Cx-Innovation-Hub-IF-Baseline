@@ -25,9 +25,13 @@ concept/tests/performance/
     ├── __init__.py            # Exports all User classes
     ├── base.py                # TaskifyBaseUser (abstract base class)
     ├── test_browse_projects.py
-    ├── test_kanban_board.py
+    ├── test_comment_moderation.py
     ├── test_comments.py
-    └── test_health.py
+    ├── test_health.py
+    ├── test_project_creation.py
+    ├── test_task_lifecycle.py
+    ├── test_users.py
+    └── ... additional test_*.py scenarios
 ```
 
 **Key design principles:**
@@ -182,7 +186,7 @@ After creating the scenario, **always** launch Locust with its web UI so the use
 
 ### Threshold Enforcement
 - **GET requests**: p95 < 500ms — enforce with inline `resp.elapsed` check
-- **POST/PATCH requests**: p95 < 1000ms
+- **State-changing requests** (`POST`, `PUT`, `PATCH`, `DELETE`): p95 < 1000ms
 - **Overall error rate**: < 1% (enforced by pipeline, not per-scenario)
 
 ### Weight Guidelines
@@ -291,10 +295,13 @@ The pipeline's cloud-load-test job queries App Insights after each load test and
 | File | Class | Weight | Description |
 |------|-------|--------|-------------|
 | `test_browse_projects.py` | `BrowseProjectsUser` | 3 | Browse project list, view project details |
-| `test_kanban_board.py` | `KanbanBoardUser` | 4 | Load task board, drag-drop status change |
+| `test_comment_moderation.py` | `CommentModerationUser` | 2 | Create, edit, and delete owned comments |
 | `test_comments.py` | `CommentActivityUser` | 2 | View task comments, post new comment |
 | `test_health.py` | `HealthCheckUser` | 1 | Lightweight health endpoint probe |
-| `test_peak_traffic.py` | `PeakTrafficUser` | 5 | Peak traffic simulation against /api/users |
+| `test_kanban_board.py` | `KanbanBoardUser` | 4 | Load task board and change task status |
+| `test_project_creation.py` | `ProjectCreationUser` | 1 | Create a project once per simulated user session |
+| `test_task_lifecycle.py` | `TaskLifecycleUser` | 2 | Create, update, assign, and delete a task |
+| `test_users.py` | `UserDirectoryUser` | 3 | Browse the user directory and user profiles |
 
 ## API Endpoints Available
 
@@ -303,7 +310,14 @@ From the Taskify Express.js API:
 - `GET /api/users` — list all users
 - `GET /api/projects` — list all projects
 - `GET /api/projects/:id` — project details
+- `POST /api/projects` — create a project
 - `GET /api/projects/:id/tasks` — tasks for a project
+- `POST /api/projects/:projectId/tasks` — create a task in a project
+- `PUT /api/tasks/:id` — update a task
 - `PATCH /api/tasks/:id/status` — update task status (body: `{status, position}`)
+- `PATCH /api/tasks/:id/assign` — assign or unassign a task owner
+- `DELETE /api/tasks/:id` — delete a task
 - `GET /api/tasks/:taskId/comments` — list comments on a task
-- `POST /api/tasks/:taskId/comments` — create a comment (body: `{content, user_id}`)
+- `POST /api/tasks/:taskId/comments` — create a comment
+- `PUT /api/comments/:id` — edit a comment you own
+- `DELETE /api/comments/:id` — delete a comment you own

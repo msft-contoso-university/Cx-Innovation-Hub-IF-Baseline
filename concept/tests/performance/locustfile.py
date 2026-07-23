@@ -5,20 +5,26 @@ Entry point that imports all scenario User classes from the scenarios/ package.
 Each scenario lives in its own module under scenarios/ for maintainability.
 
 Scenarios loaded:
-  - BrowseProjectsUser  (weight 3) — browse project list and details
-  - KanbanBoardUser     (weight 4) — load board and drag-drop status changes
-  - CommentActivityUser (weight 2) — read and post task comments
-  - HealthCheckUser     (weight 1) — lightweight health probe
-  - UserDirectoryUser   (weight 3) — browse user directory and view profiles
+  - BrowseProjectsUser    (weight 3) — browse project list and details
+  - KanbanBoardUser       (weight 4) — load board and drag-drop status changes
+  - CommentActivityUser   (weight 2) — read and post task comments
+  - CommentModerationUser (weight 2) — edit and delete owned comments
+  - HealthCheckUser       (weight 1) — lightweight health probe
+  - ProjectCreationUser   (weight 1) — create projects once per user session
+  - TaskLifecycleUser     (weight 2) — create, update, assign, and delete tasks
+  - UserDirectoryUser     (weight 3) — browse user directory and view profiles
 """
 
 import os
 
 from scenarios import (  # noqa: F401  — Locust discovers these at import time
     BrowseProjectsUser,
-    KanbanBoardUser,
     CommentActivityUser,
+    CommentModerationUser,
     HealthCheckUser,
+    KanbanBoardUser,
+    ProjectCreationUser,
+    TaskLifecycleUser,
     UserDirectoryUser,
 )
 

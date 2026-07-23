@@ -1,17 +1,21 @@
 # Taskify Performance Tests
 
-Locust-based performance tests for the Taskify Kanban Board REST API. These tests simulate realistic user behavior — browsing projects, dragging tasks across Kanban columns, and posting comments — to validate response times and throughput under load.
+Locust-based performance tests for the Taskify Kanban Board REST API. These tests simulate realistic user behavior — browsing projects, interacting with the Kanban board, moderating comments, and exercising create/update/delete flows — to validate response times and throughput under load.
 
 ## What Is Tested
 
 | Scenario | Weight | Description |
 |---|---|---|
-| **Browse Projects** | 3 | Lists all projects, then fetches a random project's details |
-| **Kanban Board Flow** | 4 | Loads a project's tasks, then moves a random task to the next status column (simulates drag-drop) |
+| **Browse Projects** | 3 | Lists all projects, then fetches a project's details |
+| **Kanban Board Flow** | 4 | Loads a project's tasks, then moves a task to the next status column |
 | **Comment Activity** | 2 | Fetches comments on a task, then posts a new comment |
+| **Comment Moderation** | 2 | Creates a comment, edits it as the owner, then deletes it |
 | **Health Check** | 1 | Hits the `/api/health` endpoint |
+| **Project Creation** | 1 | Creates a project once per simulated user session |
+| **Task Lifecycle** | 2 | Creates, updates, assigns, and deletes a task |
+| **User Directory** | 3 | Lists users and fetches individual user profiles |
 
-Weights reflect realistic usage patterns — board interactions are the most frequent, followed by browsing and commenting.
+Weights reflect realistic usage patterns — board interactions and browsing remain the most frequent, while create/delete flows run at lower weights to preserve deterministic cleanup.
 
 ## Prerequisites
 
@@ -73,7 +77,7 @@ Runs with default settings: 50 users, spawn rate 10, 2-minute duration.
 | Metric | Target |
 |---|---|
 | GET requests p95 | < 500 ms |
-| POST/PATCH requests p95 | < 1000 ms |
+| State-changing requests p95 | < 1000 ms |
 | Error rate | < 1% |
 | Throughput | > 50 req/s at 50 users |
 
