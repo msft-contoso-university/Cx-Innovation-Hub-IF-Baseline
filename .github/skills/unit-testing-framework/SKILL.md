@@ -132,3 +132,22 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## `vi.spyOn` Lifecycle Pitfall (Learned Pattern)
+
+- Do **not** call `vi.spyOn` at `describe`-scope (i.e., outside any `beforeEach`/`it`).
+  Calling `mockRestore()` in `afterEach` permanently detaches the spy; the const variable then
+  refers to the restored original function, so subsequent tests record 0 calls.
+- **Correct pattern** — create the spy fresh in `beforeEach` and assign to a `let` variable:
+  ```typescript
+  let consoleSpy: ReturnType<typeof vi.spyOn<Console, 'error'>>;
+
+  beforeEach(() => {
+    consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
+  });
+  ```
+- This guarantees every test gets an independent, fresh spy with a clean call history.
