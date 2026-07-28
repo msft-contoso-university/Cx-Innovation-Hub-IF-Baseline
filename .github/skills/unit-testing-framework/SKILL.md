@@ -132,3 +132,34 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## Route Handler Testing Pattern (Learned Pattern)
+
+When testing Express route modules that live in `concept/apps/api/src/routes/`:
+
+1. **Install `express` as a devDependency** in `concept/tests/unit` (it is not present in the API's node_modules in this repo's CI environment).
+2. **Intercept `express` in `Module._load`** so the route file resolves it from the test project:
+   ```typescript
+   const expressModulePath = require.resolve('express'); // resolves from test node_modules
+   Module._load = (request, parent, isMain) => {
+     if (request === 'express') return originalLoad(expressModulePath, parent, isMain);
+     // ... intercept database, etc.
+     return originalLoad(request, parent, isMain);
+   };
+   ```
+3. **Extract route handlers** from `router.stack` after loading:
+   ```typescript
+   function findHandler(router: any, method: string, path: string) {
+     const layer = router.stack.find(
+       (l: any) => l.route?.path === path && l.route?.methods?.[method.toLowerCase()]
+     );
+     return layer.route.stack[0].handle;
+   }
+   ```
+4. Call the handler with mock `req`, `res`, and `next` objects — no HTTP server needed.
+5. Use `Module._resolveFilename` (not string matching) to match relative dependency paths robustly:
+   ```typescript
+   const resolved = Module._resolveFilename(request, parent, isMain);
+   if (resolved === databasePath) return mockDatabase;
+   ```
+
