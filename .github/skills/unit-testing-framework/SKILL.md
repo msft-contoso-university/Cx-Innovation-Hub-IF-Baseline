@@ -132,3 +132,19 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## Express Route Testing (Learned Pattern)
+
+- Express route files require `express` at load time, but `express` is only installed under `concept/apps/api/node_modules`, NOT in `concept/tests/unit/node_modules`.
+- When loading a route module via `Module._load` interception, also intercept the `'express'` request and return the express module resolved from the test directory:
+  ```typescript
+  const expressModule = require('express'); // resolved from test dir
+  Module._load = (request, parent, isMain) => {
+    if (request === 'express') return expressModule;
+    // ... other mocks
+    return originalLoad(request, parent, isMain);
+  };
+  ```
+- Add `express` and `@types/express` as devDependencies in `concept/tests/unit/package.json` when testing route files.
+- Look up registered route handlers via `router.stack` (Express Router stores layers there). Each layer has `.route.path`, `.route.methods`, and `.route.stack` containing the middleware chain.
+- Spy-call-count assertions (`toHaveBeenCalledTimes`) on `console.error` are fragile across tests because `vi.clearAllMocks()` resets call history but Vitest may share the spy across the describe block. Prefer argument-content assertions (e.g., `mock.calls.some(args => args[0] === err.stack)`) instead.
