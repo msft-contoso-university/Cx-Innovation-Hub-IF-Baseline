@@ -73,6 +73,7 @@ class CommentActivityUser(TaskifyBaseUser):
                 return
 
         # Post a new comment
+        new_comment_id = None
         with self.client.post(
             f"/api/tasks/{task_id}/comments",
             json={
@@ -88,4 +89,38 @@ class CommentActivityUser(TaskifyBaseUser):
             elif resp.elapsed.total_seconds() * 1000 > 1000:
                 resp.failure(
                     f"comment_activity post: response time {resp.elapsed.total_seconds()*1000:.0f}ms > 1000ms"
+                )
+            else:
+                new_comment_id = resp.json().get("id", resp.json().get("_id"))
+
+        if not new_comment_id:
+            return
+
+        # Edit the comment we just posted (author-only operation)
+        with self.client.put(
+            f"/api/comments/{new_comment_id}",
+            json={"content": random.choice(COMMENT_TEXTS) + " (edited)"},
+            headers={"X-User-Id": self.current_user_id},
+            name="PUT /api/comments/:id",
+            catch_response=True,
+        ) as resp:
+            if resp.status_code not in (200, 201):
+                resp.failure(f"comment_activity edit: status {resp.status_code}")
+            elif resp.elapsed.total_seconds() * 1000 > 1000:
+                resp.failure(
+                    f"comment_activity edit: response time {resp.elapsed.total_seconds()*1000:.0f}ms > 1000ms"
+                )
+
+        # Delete the comment we posted (author-only operation, clean-up)
+        with self.client.delete(
+            f"/api/comments/{new_comment_id}",
+            headers={"X-User-Id": self.current_user_id},
+            name="DELETE /api/comments/:id",
+            catch_response=True,
+        ) as resp:
+            if resp.status_code not in (200, 204):
+                resp.failure(f"comment_activity delete: status {resp.status_code}")
+            elif resp.elapsed.total_seconds() * 1000 > 1000:
+                resp.failure(
+                    f"comment_activity delete: response time {resp.elapsed.total_seconds()*1000:.0f}ms > 1000ms"
                 )
