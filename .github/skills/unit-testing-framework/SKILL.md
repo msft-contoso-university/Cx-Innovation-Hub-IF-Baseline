@@ -132,3 +132,33 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## Express Router Mocking (Learned Pattern)
+
+- The unit test package (`concept/tests/unit`) does **not** have `express` as a dependency.
+- Route files (`concept/apps/api/src/routes/*.js`) call `require("express")` and use `Router()`.
+- When testing route handlers, intercept `'express'` in the `Module._load` override and return a minimal mock:
+
+```typescript
+function buildExpressMock() {
+  function Router() {
+    const stack: RouteLayer[] = [];
+    const addRoute = (method: string, path: string, handler: Handler) => {
+      stack.push({ route: { path, methods: { [method]: true }, stack: [{ handle: handler }] } });
+    };
+    return {
+      stack,
+      get: (path: string, h: Handler) => addRoute('get', path, h),
+      post: (path: string, h: Handler) => addRoute('post', path, h),
+      put: (path: string, h: Handler) => addRoute('put', path, h),
+      patch: (path: string, h: Handler) => addRoute('patch', path, h),
+      delete: (path: string, h: Handler) => addRoute('delete', path, h),
+    };
+  }
+  return { Router };
+}
+```
+
+- Then in `Module._load`: `if (request === 'express') return buildExpressMock();`
+- Retrieve a specific handler with: `router.stack.find(l => l.route.path === path && l.route.methods[method]).route.stack[0].handle`
+- Do **not** add `express` to `package.json` in `concept/tests/unit` — use the mock instead.
