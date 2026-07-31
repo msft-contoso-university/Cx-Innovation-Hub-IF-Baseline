@@ -132,3 +132,54 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## Express Route Testing (Learned Pattern)
+
+The API's `node_modules` are not installed in the test environment. When testing Express route modules:
+
+- `express` is not resolvable via `originalLoad` — intercept it with a lightweight mock Router.
+- For `../middleware/errorHandler`, load it once via `require.resolve` (it has no external deps) and re-serve it in `Module._load` to avoid resolution errors.
+- Use `Module._resolveFilename(request, parent, isMain)` inside the `Module._load` interceptor to canonicalize relative paths before comparing them to pre-resolved absolute paths.
+- Lightweight Router mock that matches the `router.stack` format used by the `getHandler` helper:
+
+```typescript
+function createMockRouter() {
+  const stack: any[] = [];
+  const router: any = { stack };
+  for (const method of ['get', 'post', 'put', 'patch', 'delete']) {
+    router[method] = (routePath: string, handler: Function) => {
+      stack.push({
+        route: {
+          path: routePath,
+          methods: { [method]: true },
+          stack: [{ handle: handler }],
+        },
+      });
+    };
+  }
+  return router;
+}
+const expressMock = { Router: createMockRouter };
+```
+
+- Route handlers are extracted with a helper:
+
+```typescript
+function getHandler(router: any, method: string, routePath: string): Function {
+  const layer = router.stack.find(
+    (l: any) => l.route && l.route.path === routePath && l.route.methods[method.toLowerCase()],
+  );
+  if (!layer) throw new Error(`No ${method} ${routePath} route found`);
+  return layer.route.stack[0].handle;
+}
+```
+
+- Call extracted handlers with plain mock `req`/`res`/`next` objects:
+
+```typescript
+function buildRes() {
+  const json = vi.fn();
+  const status = vi.fn().mockReturnValue({ json });
+  return { res: { status, json }, status, json };
+}
+```
