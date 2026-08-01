@@ -10,6 +10,7 @@ Locust-based performance tests for the Taskify Kanban Board REST API. These test
 | **Kanban Board Flow** | 4 | Loads a project's tasks, then moves a random task to the next status column (simulates drag-drop) |
 | **Comment Activity** | 2 | Fetches comments on a task, then posts a new comment |
 | **Health Check** | 1 | Hits the `/api/health` endpoint |
+| **Work Item Management** | 2 | Creates a project, creates/updates/assigns/deletes a task, and edits/deletes its comment |
 
 Weights reflect realistic usage patterns — board interactions are the most frequent, followed by browsing and commenting.
 
