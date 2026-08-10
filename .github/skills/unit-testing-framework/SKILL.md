@@ -132,3 +132,10 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## Testing Express Route Modules Without Installing `express` (Learned Pattern)
+
+- `concept/apps/api/src/routes/*.js` files `require("express")` to build a `Router`. The `concept/tests/unit` CI job only runs `npm ci` inside `concept/tests/unit` — it does **not** install `concept/apps/api`'s dependencies — so `express` is not resolvable on disk when a route module is `require`'d from a unit test.
+- Do not add `express` as a `concept/tests/unit` devDependency to work around this; the module-loader interception already in place can intercept `express` itself, the same way it intercepts `../services/database`.
+- Pattern (see `concept/tests/unit/api/routes/testHelpers.ts`): inside the same `Module._load` override used for mocking `pg`/database, add a branch for `request === 'express'` that returns `{ Router: createFakeRouter }`, where `createFakeRouter()` returns a plain object exposing `get/post/put/patch/delete(path, handler)` methods that push `{ route: { path, methods: { [method]: true }, stack: [{ handle: handler }] } }` onto a `stack` array — this reproduces the exact shape Express itself uses, so a `getRouteHandler(router, method, path)` helper can find the final handler without a real Express install.
+- Call route handlers directly as `handler(req, res, next)` with hand-built `req`/`res` mocks; there is no need to spin up an HTTP server or use `supertest`.
