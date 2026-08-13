@@ -10,6 +10,7 @@ Scenarios loaded:
   - CommentActivityUser (weight 2) — read and post task comments
   - HealthCheckUser     (weight 1) — lightweight health probe
   - UserDirectoryUser   (weight 3) — browse user directory and view profiles
+  - TaskMutationUser    (weight 2) — create, update, assign, comment, and delete tasks
 """
 
 import os
@@ -20,6 +21,7 @@ from scenarios import (  # noqa: F401  — Locust discovers these at import time
     CommentActivityUser,
     HealthCheckUser,
     UserDirectoryUser,
+    TaskMutationUser,
 )
 
 BASE_URL = os.environ.get("TASKIFY_BASE_URL", "http://localhost:3000")
