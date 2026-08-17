@@ -4,6 +4,8 @@ from .test_kanban_board import KanbanBoardUser
 from .test_comments import CommentActivityUser
 from .test_health import HealthCheckUser
 from .test_users import UserDirectoryUser
+from .test_project_task_lifecycle import ProjectTaskLifecycleUser
+from .test_comment_lifecycle import CommentLifecycleUser
 
 __all__ = [
     "BrowseProjectsUser",
@@ -11,4 +13,6 @@ __all__ = [
     "CommentActivityUser",
     "HealthCheckUser",
     "UserDirectoryUser",
+    "ProjectTaskLifecycleUser",
+    "CommentLifecycleUser",
 ]

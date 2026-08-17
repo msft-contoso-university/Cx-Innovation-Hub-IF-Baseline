@@ -5,11 +5,13 @@ Entry point that imports all scenario User classes from the scenarios/ package.
 Each scenario lives in its own module under scenarios/ for maintainability.
 
 Scenarios loaded:
-  - BrowseProjectsUser  (weight 3) — browse project list and details
-  - KanbanBoardUser     (weight 4) — load board and drag-drop status changes
-  - CommentActivityUser (weight 2) — read and post task comments
-  - HealthCheckUser     (weight 1) — lightweight health probe
-  - UserDirectoryUser   (weight 3) — browse user directory and view profiles
+  - BrowseProjectsUser       (weight 3) — browse project list and details
+  - KanbanBoardUser          (weight 4) — load board and drag-drop status changes
+  - CommentActivityUser      (weight 2) — read and post task comments
+  - HealthCheckUser          (weight 1) — lightweight health probe
+  - UserDirectoryUser        (weight 3) — browse user directory and view profiles
+  - ProjectTaskLifecycleUser (weight 3) — create/update/assign/delete a project's task
+  - CommentLifecycleUser     (weight 2) — post/edit/delete a task comment
 """
 
 import os
@@ -20,6 +22,8 @@ from scenarios import (  # noqa: F401  — Locust discovers these at import time
     CommentActivityUser,
     HealthCheckUser,
     UserDirectoryUser,
+    ProjectTaskLifecycleUser,
+    CommentLifecycleUser,
 )
 
 BASE_URL = os.environ.get("TASKIFY_BASE_URL", "http://localhost:3000")
