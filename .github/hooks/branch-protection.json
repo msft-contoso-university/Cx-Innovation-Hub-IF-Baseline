@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": ".github/hooks/scripts/branch-protection.sh session-start",
+        "windows": "powershell -ExecutionPolicy Bypass -File .github\\hooks\\scripts\\branch-protection.ps1 session-start",
+        "timeout": 10
+      }
+    ],
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": ".github/hooks/scripts/branch-protection.sh pre-tool",
+        "windows": "powershell -ExecutionPolicy Bypass -File .github\\hooks\\scripts\\branch-protection.ps1 pre-tool",
+        "timeout": 10
+      }
+    ]
+  }
+}
