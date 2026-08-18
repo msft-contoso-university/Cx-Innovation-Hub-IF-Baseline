@@ -294,7 +294,7 @@ The pipeline's cloud-load-test job queries App Insights after each load test and
 | `test_kanban_board.py` | `KanbanBoardUser` | 4 | Load task board, drag-drop status change |
 | `test_comments.py` | `CommentActivityUser` | 2 | View task comments, post new comment |
 | `test_health.py` | `HealthCheckUser` | 1 | Lightweight health endpoint probe |
-| `test_peak_traffic.py` | `PeakTrafficUser` | 5 | Peak traffic simulation against /api/users |
+| `test_users.py` | `UserDirectoryUser` | 3 | Browse user directory and view user profiles |
 
 ## API Endpoints Available
 
