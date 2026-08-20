@@ -39,15 +39,18 @@ class ApiMutationUser(TaskifyBaseUser):
         sequence = getattr(self, "_mutation_sequence", 0) + 1
         self._mutation_sequence = sequence
 
-        with self.client.post(
-            "/api/projects",
-            json={"name": f"Load test project {self.current_user_id}-{sequence}"},
-            name="POST /api/projects",
-            catch_response=True,
-        ) as response:
-            if self._failed(response, "mutation project create"):
-                return
-            project_id = response.json().get("id")
+        project_id = getattr(self, "_mutation_project_id", None)
+        if not project_id:
+            with self.client.post(
+                "/api/projects",
+                json={"name": f"Load test project {self.current_user_id}-{sequence}"},
+                name="POST /api/projects",
+                catch_response=True,
+            ) as response:
+                if self._failed(response, "mutation project create"):
+                    return
+                project_id = response.json().get("id")
+                self._mutation_project_id = project_id
 
         if not project_id:
             return
