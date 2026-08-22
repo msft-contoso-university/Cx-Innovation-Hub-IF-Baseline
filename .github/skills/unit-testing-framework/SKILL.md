@@ -132,3 +132,13 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## Express Route Handler Testing (Learned Pattern)
+
+- `concept/tests/unit` intentionally has no `express`/`supertest` dependency, and `concept/apps/api/node_modules` is not installed for unit runs.
+- To unit test route modules (`concept/apps/api/src/routes/*.js`), reuse the shared harness at `concept/tests/unit/helpers/expressRouterHarness.ts`:
+  - `loadRouteModule("tasks.js", queryMock)` patches `Module._load` so `express` returns a fake `Router` that records handlers and `../services/database` returns `{ getPool: () => ({ query }) }`.
+  - `getHandler(router, "PATCH /tasks/:id/status")` returns the raw handler; invoke it with plain `req`/`res`/`next` doubles.
+  - `createResponse()` captures `status()`/`json()` for assertions.
+- Assert on `next.mock.calls[0][0]` for `createError(...)` failures (status + message) and on `query.mock.calls[n][1]` for SQL parameters.
+- Give each test its own `vi.fn()` query mock in `beforeEach` so no state leaks between tests.
