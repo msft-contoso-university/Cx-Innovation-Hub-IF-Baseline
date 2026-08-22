@@ -307,3 +307,34 @@ From the Taskify Express.js API:
 - `PATCH /api/tasks/:id/status` — update task status (body: `{status, position}`)
 - `GET /api/tasks/:taskId/comments` — list comments on a task
 - `POST /api/tasks/:taskId/comments` — create a comment (body: `{content, user_id}`)
+- `POST /api/projects` — create a project (body: `{name, description}`)
+- `POST /api/projects/:projectId/tasks` — create a task (body: `{title, description, assigned_user_id}`)
+- `PUT /api/tasks/:id` — update task title/description (body: `{title, description}`)
+- `PATCH /api/tasks/:id/assign` — assign/unassign a user (body: `{assigned_user_id}`)
+- `DELETE /api/tasks/:id` — delete a task
+- `PUT /api/comments/:id` — edit own comment (body: `{content}`, header `X-User-Id`)
+- `DELETE /api/comments/:id` — delete own comment (header `X-User-Id`)
+- `GET /api/users/:id` — user profile
+
+## Coverage Hook Alignment (Learned Pattern)
+
+`.github/hooks/scripts/load-test-coverage.{sh,ps1}` computes coverage by matching the
+`name="METHOD /path"` value of each request against the routes declared in
+`concept/apps/api/src`. To keep an endpoint counted:
+
+- Use the exact route path with its parameter placeholders, e.g.
+  `name="POST /api/projects/:projectId/tasks"` (any `:token` normalizes to `:param`).
+- Prefix helper/setup calls that should not claim coverage with a bracket tag, e.g.
+  `name="[setup] GET /api/users"` or `name="[comment-lifecycle] GET /api/projects/:id/tasks"`.
+  The hook strips the leading `[tag]`, so only use a tag whose method+path is already covered
+  elsewhere, or the tagged call will count too.
+- Re-run the hook after adding scenarios: `bash .github/hooks/scripts/load-test-coverage.sh </dev/null`.
+
+## Write-Path Scenarios (Learned Pattern)
+
+- Create the data a write scenario mutates (e.g. its own project) instead of mutating shared
+  seed rows — this keeps concurrent Locust users isolated.
+- Delete what the scenario created at the end of the task so repeated iterations stay
+  data-neutral and the database does not grow unboundedly during long runs.
+- Guard every follow-up step on the previous response: return early when the id is missing so
+  a failed create cannot cascade into misleading failures on later endpoints.

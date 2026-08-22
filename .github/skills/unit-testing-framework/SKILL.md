@@ -132,3 +132,19 @@ npm run test:ui
   - Clear the module from `require.cache` before loading it per test.
   - Restore `Module._load` in `afterEach`.
 - When mocking constructor dependencies called with `new`, use function/class-style `vi.fn().mockImplementation(function ... )` implementations, not arrow functions.
+
+## Express Route Testing Without a Server (Learned Pattern)
+
+API route modules (`concept/apps/api/src/routes/*.js`) are CommonJS and build an Express
+`Router` at import time. Express is not installed under `concept/tests/unit`, so do not try to
+`require("express")` or add HTTP client dependencies. Instead reuse
+`concept/tests/unit/api/routes/routeTestHarness.ts`, which:
+
+- patches `Module._load` to return a fake `Router` that records `(method, path, handler)` and a
+  fake `../services/database` whose `getPool().query()` is a test double capturing SQL + params;
+- exposes `loadRoutes(file, onQuery)`, `createRequest`, `createResponse`, `createNext` so handlers
+  are invoked directly and assertions can cover status codes, `next(err)` payloads, and the exact
+  parameters bound into each SQL statement (proving validation short-circuits before any write).
+
+Pitfall: `Object.assign(fn, { get error() {…} })` copies the getter's *current value*, not the
+getter. Use `Object.defineProperty` when a test double needs a live accessor.
