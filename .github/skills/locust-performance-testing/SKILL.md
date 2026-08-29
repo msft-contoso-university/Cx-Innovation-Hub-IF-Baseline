@@ -294,7 +294,9 @@ The pipeline's cloud-load-test job queries App Insights after each load test and
 | `test_kanban_board.py` | `KanbanBoardUser` | 4 | Load task board, drag-drop status change |
 | `test_comments.py` | `CommentActivityUser` | 2 | View task comments, post new comment |
 | `test_health.py` | `HealthCheckUser` | 1 | Lightweight health endpoint probe |
-| `test_peak_traffic.py` | `PeakTrafficUser` | 5 | Peak traffic simulation against /api/users |
+| `test_users.py` | `UserDirectoryUser` | 3 | Browse user directory, view user profiles |
+| `test_task_lifecycle.py` | `TaskLifecycleUser` | 2 | Create project + task, edit, assign, delete |
+| `test_comment_moderation.py` | `CommentModerationUser` | 2 | Post, edit and delete own comments |
 
 ## API Endpoints Available
 
@@ -305,5 +307,12 @@ From the Taskify Express.js API:
 - `GET /api/projects/:id` — project details
 - `GET /api/projects/:id/tasks` — tasks for a project
 - `PATCH /api/tasks/:id/status` — update task status (body: `{status, position}`)
+- `POST /api/projects` — create a project (body: `{name, description}`)
+- `POST /api/projects/:projectId/tasks` — create a task (body: `{title, description, assigned_user_id}`)
+- `PUT /api/tasks/:id` — update a task (body: `{title, description}`)
+- `PATCH /api/tasks/:id/assign` — assign/unassign a user (body: `{assigned_user_id}`)
+- `DELETE /api/tasks/:id` — delete a task
 - `GET /api/tasks/:taskId/comments` — list comments on a task
-- `POST /api/tasks/:taskId/comments` — create a comment (body: `{content, user_id}`)
+- `POST /api/tasks/:taskId/comments` — create a comment (body: `{content}`, `X-User-Id` header required)
+- `PUT /api/comments/:id` — edit own comment (`X-User-Id` must match the author)
+- `DELETE /api/comments/:id` — delete own comment (`X-User-Id` must match the author)
