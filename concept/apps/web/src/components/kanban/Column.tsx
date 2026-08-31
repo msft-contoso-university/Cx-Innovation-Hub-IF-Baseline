@@ -9,6 +9,7 @@ import { Droppable } from "@hello-pangea/dnd";
 import Card from "./Card";
 import type { Task, TaskStatus } from "../../api/types";
 import { STATUS_LABELS } from "../../api/types";
+import { isTaskAssignedToUser } from "./cardStyles";
 
 interface ColumnProps {
   status: TaskStatus;
@@ -57,7 +58,7 @@ export default function Column({ status, tasks, currentUserId, onCardClick }: Co
                 key={task.id}
                 task={task}
                 index={index}
-                isAssignedToCurrentUser={task.assigned_user_id === currentUserId}
+                isAssignedToCurrentUser={isTaskAssignedToUser(task, currentUserId)}
                 onClick={onCardClick}
               />
             ))}

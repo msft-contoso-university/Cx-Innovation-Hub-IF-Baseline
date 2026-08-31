@@ -8,6 +8,7 @@
 
 import { Draggable } from "@hello-pangea/dnd";
 import type { Task } from "../../api/types";
+import { getCardClassName } from "./cardStyles";
 
 interface CardProps {
   task: Task;
@@ -26,13 +27,9 @@ export default function Card({ task, index, isAssignedToCurrentUser, onClick }: 
           {...provided.dragHandleProps}
           onClick={() => onClick(task)}
           data-own={isAssignedToCurrentUser ? "true" : "false"}
-          className={`bg-white rounded-lg shadow-sm border p-3 mb-2 cursor-pointer transition-shadow ${
-            snapshot.isDragging
-              ? "shadow-lg border-blue-300"
-              : isAssignedToCurrentUser
-                ? "border-blue-300 ring-2 ring-blue-200 hover:shadow-md"
-                : "border-gray-200 hover:shadow-md"
-          }`}
+          className={`bg-white rounded-lg shadow-sm border p-3 mb-2 cursor-pointer transition-shadow ${getCardClassName(
+            { isDragging: snapshot.isDragging, isAssignedToCurrentUser }
+          )}`}
         >
           <p className="text-sm font-medium text-gray-900 mb-2">{task.title}</p>
 
