@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "applicationinsights": "^2.9.5",
-    "express": "^4.21.0",
+    "express": "^5.2.1",
     "pg": "^8.13.0",
     "cors": "^2.8.5",
     "@azure/identity": "^4.5.0",
