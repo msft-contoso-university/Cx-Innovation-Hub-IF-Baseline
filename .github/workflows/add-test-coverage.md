@@ -30,7 +30,6 @@ On each pass, review recently merged changes and add missing tests where risk is
   - Performance tests: .github/skills/locust-performance-testing/SKILL.md
   - E2E tests: .github/skills/playwright-cli-testing/SKILL.md
 - Enforce hook rules under .github/hooks:
-  - Branch protection policy: .github/hooks/branch-protection.json and .github/hooks/scripts/branch-protection.ps1
   - Load-test coverage policy: .github/hooks/load-test-coverage.json and .github/hooks/scripts/load-test-coverage.ps1
 - Do all work on branch demo/performance-testing.
 - Do not create new branches.
