@@ -51,8 +51,24 @@ router.get("/projects/:projectId/tasks", async (req, res, next) => {
 router.post("/projects/:projectId/tasks", async (req, res, next) => {
   try {
     const { title, description, assigned_user_id } = req.body;
+
     if (!title || !title.trim()) {
-      return next(createError(400, "Task title is required"));
+      return next(createError(400, "Title is required"));
+    }
+    if (title.trim().length > 200) {
+      return next(createError(400, "Title must be 200 characters or less"));
+    }
+    if (description && description.length > 1000) {
+      return next(createError(400, "Description must be 1000 characters or less"));
+    }
+
+    // Verify the project exists before creating the task
+    const { rows: projectRows } = await getPool().query(
+      "SELECT id FROM projects WHERE id = $1",
+      [req.params.projectId]
+    );
+    if (projectRows.length === 0) {
+      return next(createError(404, "Project not found"));
     }
 
     // Get the next position for new tasks in the "todo" column
